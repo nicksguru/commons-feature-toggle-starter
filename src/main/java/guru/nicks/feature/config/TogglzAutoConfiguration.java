@@ -22,7 +22,7 @@ import org.togglz.core.spi.FeatureProvider;
  * Works if {@code togglz.enabled} is true.
  * <p>
  * Configures {@link FeatureProvider} for Togglz to borrow features from the given enum only. If
- * {@code togglz .feature-enums} is used without this fix, Togglz <b>adds</b> features found in enums to those specified
+ * {@code togglz.feature-enums} is used without this fix, Togglz <b>adds</b> features found in enums to those specified
  * in properties - even if they have the same name, so there will be, surprisingly, <b>two</b> features with the same
  * name. Therefore, {@link CompositeFeatureProvider} is replaced with {@link EnumBasedFeatureProvider} here.
  *
