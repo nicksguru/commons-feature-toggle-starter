@@ -8,6 +8,7 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.togglz.core.Feature;
 import org.togglz.core.annotation.FeatureGroup;
 import org.togglz.core.annotation.Label;
+import org.togglz.core.annotation.Owner;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -99,6 +100,15 @@ public interface EnhancedFeature extends Feature {
      */
     default Optional<String> findHowToToggle() {
         return findAnnotationValue(HowToToggle.class, HowToToggle::value);
+    }
+
+    /**
+     * Reads non-blank {@link Owner#value()}}, if any.
+     *
+     * @return in which Maven module the feature resides
+     */
+    default Optional<String> findOwner() {
+        return findAnnotationValue(Owner.class, Owner::value);
     }
 
     /**
