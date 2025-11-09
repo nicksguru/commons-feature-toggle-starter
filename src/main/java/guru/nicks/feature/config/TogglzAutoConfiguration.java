@@ -61,6 +61,7 @@ public class TogglzAutoConfiguration {
      * Needs a separate {@link Configuration @Configuration} to avoid cyclic bean dependencies (outer class needs
      * {@link FeatureManager} created by this inner class).
      */
+    @ConditionalOnProperty(prefix = "togglz", name = "enabled", matchIfMissing = true)
     @Configuration(proxyBeanMethods = false)
     static class Beans {
 
