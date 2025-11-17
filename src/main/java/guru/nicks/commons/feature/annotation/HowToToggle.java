@@ -1,4 +1,4 @@
-package guru.nicks.feature.annotation;
+package guru.nicks.commons.feature.annotation;
 
 import org.togglz.core.annotation.EnabledByDefault;
 import org.togglz.core.annotation.FeatureAttribute;

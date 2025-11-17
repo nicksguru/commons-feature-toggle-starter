@@ -1,6 +1,6 @@
-package guru.nicks.feature.impl;
+package guru.nicks.commons.feature.impl;
 
-import guru.nicks.feature.FeatureTester;
+import guru.nicks.commons.feature.FeatureTester;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;

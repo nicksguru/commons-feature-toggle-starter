@@ -1,7 +1,7 @@
-package guru.nicks.feature;
+package guru.nicks.commons.feature;
 
-import guru.nicks.feature.exception.FeatureDisabledException;
-import guru.nicks.utils.ReflectionUtils;
+import guru.nicks.commons.feature.exception.FeatureDisabledException;
+import guru.nicks.commons.utils.ReflectionUtils;
 
 import jakarta.annotation.Nullable;
 import lombok.Builder;

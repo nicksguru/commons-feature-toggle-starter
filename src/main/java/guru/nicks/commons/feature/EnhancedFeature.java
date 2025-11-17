@@ -1,7 +1,7 @@
-package guru.nicks.feature;
+package guru.nicks.commons.feature;
 
-import guru.nicks.feature.annotation.BehaviorIfDisabled;
-import guru.nicks.feature.annotation.HowToToggle;
+import guru.nicks.commons.feature.annotation.BehaviorIfDisabled;
+import guru.nicks.commons.feature.annotation.HowToToggle;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.annotation.AnnotatedElementUtils;

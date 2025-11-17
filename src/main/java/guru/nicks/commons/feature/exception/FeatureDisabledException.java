@@ -1,6 +1,6 @@
-package guru.nicks.feature.exception;
+package guru.nicks.commons.feature.exception;
 
-import guru.nicks.exception.http.NotImplementedException;
+import guru.nicks.commons.exception.http.NotImplementedException;
 
 import org.togglz.core.Feature;
 

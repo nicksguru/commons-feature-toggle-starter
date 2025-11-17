@@ -1,6 +1,6 @@
-package guru.nicks.feature;
+package guru.nicks.commons.feature;
 
-import guru.nicks.feature.exception.FeatureDisabledException;
+import guru.nicks.commons.feature.exception.FeatureDisabledException;
 
 import org.togglz.core.Feature;
 

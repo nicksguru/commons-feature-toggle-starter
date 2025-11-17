@@ -1,7 +1,7 @@
-package guru.nicks.feature.config;
+package guru.nicks.commons.feature.config;
 
-import guru.nicks.feature.FeatureTester;
-import guru.nicks.feature.impl.FeatureTesterImpl;
+import guru.nicks.commons.feature.FeatureTester;
+import guru.nicks.commons.feature.impl.FeatureTesterImpl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

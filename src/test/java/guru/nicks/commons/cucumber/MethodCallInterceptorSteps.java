@@ -1,8 +1,8 @@
-package guru.nicks.cucumber;
+package guru.nicks.commons.cucumber;
 
-import guru.nicks.cucumber.world.TextWorld;
-import guru.nicks.feature.FeatureBeanPostProcessor;
-import guru.nicks.feature.FeatureTester;
+import guru.nicks.commons.cucumber.world.TextWorld;
+import guru.nicks.commons.feature.FeatureBeanPostProcessor;
+import guru.nicks.commons.feature.FeatureTester;
 
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
