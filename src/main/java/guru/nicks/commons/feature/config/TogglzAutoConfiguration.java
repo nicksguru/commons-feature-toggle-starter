@@ -4,6 +4,7 @@ import guru.nicks.commons.feature.FeatureTester;
 import guru.nicks.commons.feature.impl.FeatureTesterImpl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
@@ -31,16 +32,21 @@ import org.togglz.core.spi.FeatureProvider;
 @ConditionalOnProperty(prefix = "togglz", name = "enabled", matchIfMissing = true)
 @Configuration(proxyBeanMethods = false)
 @RequiredArgsConstructor
+@Slf4j
 public class TogglzAutoConfiguration {
 
+    /**
+     * Creates {@link FeatureTester} bean if it's not already present.
+     */
     @ConditionalOnMissingBean(FeatureTester.class)
     @Bean
     public FeatureTester featureTester(FeatureManager featureManager) {
+        log.debug("Building {} bean", FeatureTester.class.getSimpleName());
         return new FeatureTesterImpl(featureManager);
     }
 
     /**
-     * Add Togglz web console endpoint to the list printed by {@code /actuator}, to it can be clicked (not only typed).
+     * Add Togglz Web Console endpoint to the list printed by {@code /actuator}, to it can be clicked (not only typed).
      */
     @Endpoint(id = "togglz-console")
     @Component
@@ -74,6 +80,7 @@ public class TogglzAutoConfiguration {
                 throw new IllegalStateException("Configured class " + featuresEnumClass.getName() + " is not an enum");
             }
 
+            log.debug("Building {} bean", FeatureProvider.class.getSimpleName());
             return new EnumBasedFeatureProvider(featuresEnumClass);
         }
 
