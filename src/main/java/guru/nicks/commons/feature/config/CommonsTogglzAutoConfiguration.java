@@ -33,7 +33,7 @@ import org.togglz.core.spi.FeatureProvider;
 @Configuration(proxyBeanMethods = false)
 @RequiredArgsConstructor
 @Slf4j
-public class TogglzAutoConfiguration {
+public class CommonsTogglzAutoConfiguration {
 
     /**
      * Creates {@link FeatureTester} bean if it's not already present.
