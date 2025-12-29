@@ -64,6 +64,11 @@
             <groupId>org.togglz</groupId>
             <artifactId>togglz-spring-boot-starter</artifactId>
         </dependency>
+        <!-- integration with Spring Security (UserProvider) -->
+        <dependency>
+            <groupId>org.togglz</groupId>
+            <artifactId>togglz-spring-security</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.togglz</groupId>
             <artifactId>togglz-core</artifactId>
