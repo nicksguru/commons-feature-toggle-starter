@@ -58,7 +58,7 @@ public class CachingFeatureStateRepository implements StateRepository {
         NullableFeatureStateWrapper wrapper = cacheGetter.apply(feature);
         // null means key not found in cache; empty Optional means null is cached
         if (wrapper != null) {
-            return wrapper.getFeatureState();
+            return wrapper.featureState();
         }
 
         // can be null
