@@ -20,7 +20,6 @@ import org.apache.commons.collections.MapUtils;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,6 +32,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static net.bytebuddy.matcher.ElementMatchers.not;
@@ -41,6 +41,10 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
  * Feature-dependent decorator. Installs interceptor on all methods having non-empty
  * {@link #findRequiredFeature(Class)}. Works both for interface-based and class-based beans, including controllers and
  * beans having no default constructor.
+ * <p>
+ * <b>WARNING: As of Spring Boot 3.5.8, controllers cannot be wrapped: endpoints returning void (e.g. those having
+ * {@code DeleteMapping}) stop being called - no matter if the feature is enabled or not. The reason is unknown. For
+ * this reason, this post processor throws an exception when applied to a controller.</b>
  * <p>
  * Methods declared in {@link Object} class are always passed through because, for example,
  * {@link Object#equals(Object)} is needed to keep {@link Map}s functioning. Other public methods of annotated Spring
@@ -72,19 +76,14 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 @Slf4j
 public abstract class FeatureBeanPostProcessor implements BeanPostProcessor {
 
-    /**
-     * WARNING: Spring issues warnings about Togglz-related beans <i>not eligible for getting processed by all
-     * BeanPostProcessors (for example: not eligible for auto-proxying)</i> because they're still being initialized when
-     * this post-processor injects them. Lazy injection removes such warnings, but makes the code less robust.
-     */
-    @Lazy
-    private final FeatureTester featureTester;
+    @NonNull // Lombok creates runtime nullness check for this own annotation only
+    private final Predicate<Feature> featureTester;
 
     /**
-     * Reads enabler feature from, most commonly, an optional custom annotation.
+     * Reads enabler feature from, most commonly, a custom annotation.
      *
      * @param clazz class to check
-     * @return optional project feature
+     * @return feature the class depends on, if any
      */
     public abstract Optional<Feature> findRequiredFeature(Class<?> clazz);
 
@@ -124,21 +123,77 @@ public abstract class FeatureBeanPostProcessor implements BeanPostProcessor {
             return bean;
         }
 
-        // can't use bean.getClass() (e.g. subclass it) because it might be a JDK proxy (which is a final class)
+        // can't subclass bean.getClass() because it might be a JDK proxy (which is a final class)...
         Class<?> targetClass = AopUtils.getTargetClass(bean);
+        // ...but if the real target class is final, it can't be subclassed either
+        if (Modifier.isFinal(targetClass.getModifiers())) {
+            throw new IllegalArgumentException("Cannot wrap final class [" + targetClass.getName()
+                    + "] for feature ["
+                    + feature
+                    + "]. Consider making the class non-final or using interface-based proxies.");
+        }
+
         boolean targetIsController = isController(targetClass);
 
-        log.info("Making all public methods of {} [{}] dependent on feature '{}'",
-                targetIsController ? "controller" : "bean",
-                targetClass.getName(), feature);
+        // see class-level comment
+        if (targetIsController) {
+            throw new IllegalArgumentException("Cannot wrap controllers: endpoints returning void "
+                    + "(e.g. those having @DeleteMapping) stop being called no matter if the feature is enabled or "
+                    + "not. The reason is unknown.");
+        }
+
+        log.info("Making all public methods of bean [{}] dependent on feature '{}'. {}", targetClass.getName(), feature,
+                buildExplanationMessage(targetClass, targetIsController));
+
         var interceptor = MethodCallInterceptor.builder()
                 .proxyTarget(bean)
                 .proxyTargetIsController(targetIsController)
                 .feature(feature)
                 .featureTester(featureTester)
                 .build();
+        Class<?> wrapperClass = generateWrapperClass(targetClass, interceptor);
 
-        Class<?> wrapperClass = new ByteBuddy()
+        // the original class may not have a default constructor (beans having injected dependencies usually do not)
+        return ReflectionUtils.instantiateEvenWithoutDefaultConstructor(wrapperClass);
+    }
+
+    /**
+     * Builds feature behavior explanation message for logging purposes.
+     *
+     * @param targetClass the target class being wrapped
+     * @return explanation message
+     */
+    private String buildExplanationMessage(Class<?> targetClass, boolean targetIsController) {
+        if (targetIsController) {
+            return "All endpoints will throw ["
+                    + FeatureDisabledException.class.getName()
+                    + "] if the feature is disabled";
+        }
+
+        StringBuilder explanation = new StringBuilder(
+                "A disabled feature causes method calls to be skipped for methods returning void.");
+
+        Map<String, List<Method>> nonVoidPublicMethods = findNonVoidPublicMethods(targetClass);
+
+        if (!MapUtils.isEmpty(nonVoidPublicMethods)) {
+            explanation.append(" Found methods return non-void - for them, a disabled feature will throw [")
+                    .append(FeatureDisabledException.class.getName())
+                    .append("]: ")
+                    .append(nonVoidPublicMethods);
+        }
+
+        return explanation.toString();
+    }
+
+    /**
+     * Generates a wrapper class for the given target class.
+     *
+     * @param targetClass class to wrap
+     * @param interceptor method interceptor
+     * @return generated wrapper class
+     */
+    private Class<?> generateWrapperClass(Class<?> targetClass, MethodCallInterceptor interceptor) {
+        return new ByteBuddy()
                 // more meaningful suffix than default 'ByteBuddy'
                 .with(new NamingStrategy.Suffixing(getClass().getSimpleName()))
                 .subclass(targetClass)
@@ -150,15 +205,6 @@ public abstract class FeatureBeanPostProcessor implements BeanPostProcessor {
                 .make()
                 .load(getClass().getClassLoader())
                 .getLoaded();
-
-        Map<String, List<Method>> nonVoidPublicMethods = findNonVoidPublicMethods(targetClass);
-        if (!MapUtils.isEmpty(nonVoidPublicMethods)) {
-            log.warn("Methods return non-void - for them, a disabled feature '{}' will throw {}: {}",
-                    feature, FeatureDisabledException.class.getSimpleName(), nonVoidPublicMethods);
-        }
-
-        // the original class may not have a default constructor (beans having injected dependencies usually do not)
-        return ReflectionUtils.instantiateEvenWithoutDefaultConstructor(wrapperClass);
     }
 
     /**
@@ -177,7 +223,7 @@ public abstract class FeatureBeanPostProcessor implements BeanPostProcessor {
         Feature feature;
 
         @NonNull // Lombok creates runtime nullness check for this own annotation only
-        FeatureTester featureTester;
+        Predicate<Feature> featureTester;
 
         @RuntimeType
         @Nullable
@@ -199,7 +245,7 @@ public abstract class FeatureBeanPostProcessor implements BeanPostProcessor {
         private Object processDisabledFeature(Feature feature, Method method) {
             if (proxyTargetIsController) {
                 var e = new FeatureDisabledException(feature);
-                log.error("Feature '{}' disabled - throwing [{}] instead of calling controller [{}]",
+                log.error("Feature '{}' disabled - throwing [{}] instead of calling endpoint [{}]",
                         feature, e.getClass().getSimpleName(), method);
                 throw e;
             }
