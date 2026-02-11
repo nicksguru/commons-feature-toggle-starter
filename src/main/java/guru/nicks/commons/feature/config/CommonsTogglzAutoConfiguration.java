@@ -10,6 +10,7 @@ import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.togglz.core.Feature;
@@ -29,7 +30,7 @@ import org.togglz.core.spi.FeatureProvider;
  * @see FeatureTester
  */
 @ConditionalOnProperty(prefix = "togglz", name = "enabled", matchIfMissing = true)
-@Configuration(proxyBeanMethods = false)
+@AutoConfiguration
 @RequiredArgsConstructor
 @Slf4j
 public class CommonsTogglzAutoConfiguration {
