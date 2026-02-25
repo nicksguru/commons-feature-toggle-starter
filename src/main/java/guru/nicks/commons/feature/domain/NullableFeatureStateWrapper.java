@@ -1,19 +1,21 @@
 package guru.nicks.commons.feature.domain;
 
+import guru.nicks.commons.feature.repository.CachingFeatureStateRepository;
+
 import lombok.Builder;
-import lombok.Value;
-import lombok.experimental.NonFinal;
 import org.togglz.core.repository.FeatureState;
 
 import java.io.Serializable;
 
-@Value
-@NonFinal
+/**
+ * Wrapper for {@link FeatureState} that can hold {@code null} values.
+ *
+ * @see CachingFeatureStateRepository
+ */
 @Builder(toBuilder = true)
-public class NullableFeatureStateWrapper implements Serializable {
+public record NullableFeatureStateWrapper(
+        FeatureState featureState) implements Serializable {
 
     public static final NullableFeatureStateWrapper EMPTY = NullableFeatureStateWrapper.builder().build();
-
-    FeatureState featureState;
 
 }

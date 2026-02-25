@@ -2,6 +2,8 @@ package guru.nicks.commons.feature;
 
 import guru.nicks.commons.feature.annotation.BehaviorIfDisabled;
 import guru.nicks.commons.feature.annotation.HowToToggle;
+import guru.nicks.commons.feature.annotation.Stability;
+import guru.nicks.commons.feature.domain.FeatureStability;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.annotation.AnnotatedElementUtils;
@@ -20,6 +22,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Additional methods for {@link Feature}.
+ */
 public interface EnhancedFeature extends Feature {
 
     /**
@@ -82,6 +87,17 @@ public interface EnhancedFeature extends Feature {
         }
 
         return label;
+    }
+
+    /**
+     * Reads stability status from {@link Stability @Stability}, if any, falling back to {@link FeatureStability#STABLE}
+     * because the missing annotation means the feature is stable.
+     *
+     * @return feature stability status
+     */
+    default FeatureStability getStability() {
+        return findAnnotationValue(Stability.class, Stability::value)
+                .orElse(FeatureStability.STABLE);
     }
 
     /**
