@@ -58,7 +58,7 @@ public class CachingFeatureStateRepository implements StateRepository {
         NullableFeatureStateWrapper wrapper = cacheGetter.apply(feature);
         // null means key not found in cache; empty Optional means null is cached
         if (wrapper != null) {
-            return wrapper.featureState();
+            return wrapper.toFeatureState(feature);
         }
 
         // can be null
@@ -94,12 +94,7 @@ public class CachingFeatureStateRepository implements StateRepository {
                         ? "null (for real value, see feature's @EnabledByDefault)"
                         : (featureState.isEnabled() ? "enabled" : "disabled"));
 
-        var wrapper = (featureState == null)
-                // save memory - use immutable singleton
-                ? NullableFeatureStateWrapper.EMPTY
-                : NullableFeatureStateWrapper.builder()
-                        .featureState(featureState)
-                        .build();
+        var wrapper = NullableFeatureStateWrapper.of(featureState);
         cacheUpdater.accept(feature, wrapper);
     }
 
