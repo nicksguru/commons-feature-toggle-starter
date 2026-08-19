@@ -1,12 +1,14 @@
 package guru.nicks.commons.feature;
 
 import guru.nicks.commons.feature.exception.FeatureDisabledException;
+import guru.nicks.commons.utils.ExceptionUtils;
 import guru.nicks.commons.utils.ReflectionUtils;
 
 import jakarta.annotation.Nullable;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.ByteBuddy;
@@ -227,12 +229,17 @@ public abstract class FeatureBeanPostProcessor implements BeanPostProcessor {
 
         @RuntimeType
         @Nullable
-        @SuppressWarnings("java:S1160") // throw more than 1 checked exception
-        public Object invoke(@Origin Method method, @AllArguments Object[] methodArguments)
-                throws InvocationTargetException, IllegalAccessException {
+        @SneakyThrows
+        public Object invoke(@Origin Method method, @AllArguments Object[] methodArguments) {
             // don't cache feature state: it can be modified at any time manually, depend on IP address, date, etc.
             if (featureTester.test(feature)) {
-                return method.invoke(proxyTarget, methodArguments);
+                try {
+                    return method.invoke(proxyTarget, methodArguments);
+                }
+                // without this, callers that catch e.g. BusinessException will never match because it's wrapped
+                catch (InvocationTargetException e) {
+                    throw ExceptionUtils.unwrapInvocationTargetException(e);
+                }
             }
 
             return processDisabledFeature(feature, method);
