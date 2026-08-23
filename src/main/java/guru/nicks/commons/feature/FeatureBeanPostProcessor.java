@@ -101,6 +101,7 @@ public abstract class FeatureBeanPostProcessor implements BeanPostProcessor {
             .or(ElementMatchers.isEquals())
             .or(ElementMatchers.isHashCode())
             .or(ElementMatchers.isToString());
+
     @NonNull // Lombok creates runtime nullness check for this own annotation only
     private final Predicate<Feature> featureTester;
 
