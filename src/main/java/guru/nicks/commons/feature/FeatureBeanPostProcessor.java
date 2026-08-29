@@ -12,7 +12,6 @@ import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
@@ -26,6 +25,7 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.objenesis.ObjenesisStd;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RestController;
 import org.togglz.core.Feature;
@@ -213,6 +213,11 @@ public abstract class FeatureBeanPostProcessor implements BeanPostProcessor {
 
     /**
      * Generates a wrapper class for the given target class.
+     * <p>
+     * NOTE: this method lets ByteBuddy generate a unique suffix for the wrapper class, so each time this method is
+     * called for the SAME class, the wrapper class is DIFFERENT. This is necessary to avoid conflicts between
+     * different interceptors or tests re-using the same source class for differently configured environment. Also,
+     * {@link ObjenesisStd} caches instantiators by the class name.
      *
      * @param targetClass class to wrap
      * @param interceptor method interceptor
@@ -220,8 +225,8 @@ public abstract class FeatureBeanPostProcessor implements BeanPostProcessor {
      */
     private Class<?> generateWrapperClass(Class<?> targetClass, MethodCallInterceptor interceptor) {
         return new ByteBuddy()
-                // more meaningful suffix than default 'ByteBuddy'
-                .with(new NamingStrategy.Suffixing(getClass().getSimpleName()))
+                // COMMENTED OUT - see method-level comment for details
+                //.with(new NamingStrategy.Suffixing(getClass().getSimpleName()))
                 .subclass(targetClass)
                 .method(INTERCEPTED_METHODS)
                 // without the filter, ByteBuddy's MethodNameEqualityResolver would bind the intercepted
